@@ -1,0 +1,28 @@
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environment
+venv/
+env/
+ENV/
+
+# Database files
+*.sqlite3
+*.sqlite3-journal
+
+# Environment configurations
+.env
+.env.local
+
+# Django media & static collection
+media/
+staticfiles/
+
+# Logs & test reports
+*.log
+.pytest_cache/
+htmlcov/
+.coverage

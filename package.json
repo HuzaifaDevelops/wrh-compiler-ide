@@ -1,0 +1,31 @@
+{
+  "name": "wrh-compiler-app-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Monorepo for the WRH Full-Stack Compiler Web Application (Next.js + Django)",
+  "scripts": {
+    "dev": "concurrently -n \"backend,frontend\" -c \"blue.bold,green.bold\" \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "node scripts/run-backend.js",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "build": "npm run build --prefix frontend",
+    "lint": "npm run lint --prefix frontend",
+    "setup": "node -e \"console.log('Use scripts/setup.ps1 on Windows or scripts/setup.sh on Unix for full setup.')\"",
+    "test": "npm run test:backend && npm run test:e2e",
+    "test:backend": "node scripts/run-backend-test.js",
+    "test:frontend": "npm run lint --prefix frontend",
+    "test:e2e": "python tests/e2e/run_e2e_tests.py"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "keywords": [
+    "compiler",
+    "wrh-lang",
+    "django",
+    "nextjs",
+    "react",
+    "monaco-editor"
+  ],
+  "author": "Compiler Construction Team",
+  "license": "ISC"
+}
