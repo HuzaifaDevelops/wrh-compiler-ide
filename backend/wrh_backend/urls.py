@@ -10,4 +10,5 @@ urlpatterns = [
     path('api/auth/', include('apps.authentication.urls')),
     path('api/compile/', include('apps.compiler.urls')),
     path('api/workspace/', include('apps.workspace.urls')),
+    path('api/ai/', include('apps.ai_assistant.urls')),
 ]

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { AlertTriangle, Crosshair, ArrowRightCircle } from "lucide-react";
+import { AlertTriangle, Crosshair, ArrowRightCircle, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CompilerError } from "@/types/compiler";
@@ -10,12 +10,14 @@ interface DiagnosticBannerProps {
   errors: CompilerError[];
   stageFailed: "lexical" | "syntax" | "semantic" | null;
   onJumpToLine?: (line: number, column?: number) => void;
+  onFixWithAi?: () => void;
 }
 
 export function DiagnosticBanner({
   errors,
   stageFailed,
   onJumpToLine,
+  onFixWithAi,
 }: DiagnosticBannerProps) {
   if (!errors || errors.length === 0) return null;
 
@@ -35,9 +37,21 @@ export function DiagnosticBanner({
             </p>
           </div>
         </div>
-        <Badge variant="danger" className="text-[10px] uppercase font-mono">
-          Stage Failed
-        </Badge>
+        <div className="flex items-center gap-2">
+          {onFixWithAi && (
+            <Button
+              size="sm"
+              onClick={onFixWithAi}
+              className="h-7 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold text-xs flex items-center gap-1.5 shadow-md shadow-indigo-950/50"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>Fix with AI</span>
+            </Button>
+          )}
+          <Badge variant="danger" className="text-[10px] uppercase font-mono">
+            Stage Failed
+          </Badge>
+        </div>
       </div>
 
       <div className="space-y-2">

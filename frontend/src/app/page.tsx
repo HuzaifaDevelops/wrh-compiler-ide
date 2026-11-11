@@ -29,6 +29,7 @@ import { AuthModal } from "@/components/auth/AuthModal";
 import { DocsDrawer } from "@/components/docs/DocsDrawer";
 import { VisualizerPanel } from "@/components/visualizer/VisualizerPanel";
 import { SnippetsModal } from "@/components/workspace/SnippetsModal";
+import { AiAssistantModal } from "@/components/ai/AiAssistantModal";
 
 // Dynamically import Monaco Editor to avoid SSR hydration issues
 const Editor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
@@ -91,8 +92,21 @@ export default function WorkspacePage() {
   const [isDocsOpen, setIsDocsOpen] = useState<boolean>(false);
   const [isAuthOpen, setIsAuthOpen] = useState<boolean>(false);
   const [isSnippetsOpen, setIsSnippetsOpen] = useState<boolean>(false);
+  const [isAiOpen, setIsAiOpen] = useState<boolean>(false);
+  const [aiInitialTab, setAiInitialTab] = useState<"fix" | "generate" | "chat">("generate");
   const [authInitialTab, setAuthInitialTab] = useState<"login" | "register">("login");
   const [copiedCode, setCopiedCode] = useState<boolean>(false);
+
+  const handleOpenAi = (tab: "fix" | "generate" | "chat" = "generate") => {
+    setAiInitialTab(tab);
+    setIsAiOpen(true);
+  };
+
+  const handleApplyAiCode = (code: string) => {
+    setSourceCode(code);
+    clearEditorMarkers();
+    setCompileResult(null);
+  };
 
   // Monaco Editor References
   const editorRef = useRef<any>(null);
@@ -359,6 +373,17 @@ export default function WorkspacePage() {
             </button>
           </div>
 
+          {/* AI Assistant Trigger */}
+          <Button
+            onClick={() => handleOpenAi(compileResult && !compileResult.success ? "fix" : "generate")}
+            size="sm"
+            className="flex items-center gap-1.5 bg-gradient-to-r from-purple-600 via-indigo-600 to-cyan-500 hover:from-purple-500 hover:to-cyan-400 font-semibold text-white shadow-lg shadow-purple-950/40 transition-all px-3"
+            title="Open Gemini AI Assistant to Code or Fix Errors"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">AI Assistant</span>
+          </Button>
+
           {/* Compile Execution Trigger */}
           <Button
             onClick={triggerCompile}
@@ -443,6 +468,16 @@ export default function WorkspacePage() {
               <span className="hidden lg:inline text-[11px] text-slate-500">
                 Press <kbd className="rounded bg-slate-800 px-1 py-0.5 text-[10px]">Ctrl+Enter</kbd> to compile
               </span>
+
+              {/* AI Assistant Quick Trigger */}
+              <button
+                onClick={() => handleOpenAi(compileResult && !compileResult.success ? "fix" : "generate")}
+                title="Code or Fix with Gemini AI"
+                className="flex items-center gap-1 rounded px-2 py-0.5 text-[11px] text-purple-300 hover:text-white bg-purple-950/60 border border-purple-800/60 hover:bg-purple-900/80 transition-colors"
+              >
+                <Sparkles className="h-3 w-3 text-purple-400" />
+                <span>AI</span>
+              </button>
 
               {/* Copy Code Button */}
               <button
@@ -540,6 +575,7 @@ export default function WorkspacePage() {
             compileResult={compileResult}
             isCompiling={isCompiling}
             onJumpToLine={handleJumpToLine}
+            onFixWithAi={() => handleOpenAi("fix")}
           />
         </section>
       </main>
@@ -568,6 +604,16 @@ export default function WorkspacePage() {
           setAuthInitialTab("login");
           setIsAuthOpen(true);
         }}
+      />
+
+      {/* Gemini AI Assistant Modal */}
+      <AiAssistantModal
+        isOpen={isAiOpen}
+        onClose={() => setIsAiOpen(false)}
+        currentCode={editorRef.current ? editorRef.current.getValue() : sourceCode}
+        errors={compileResult?.errors || []}
+        onApplyCode={handleApplyAiCode}
+        initialTab={aiInitialTab}
       />
     </div>
   );

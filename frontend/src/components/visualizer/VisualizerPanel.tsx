@@ -26,6 +26,7 @@ interface VisualizerPanelProps {
   compileResult: CompileResponse | null;
   isCompiling: boolean;
   onJumpToLine?: (line: number, column?: number) => void;
+  onFixWithAi?: () => void;
 }
 
 export type VisualizerTab = "all" | "tokens" | "ast" | "symbols" | "icg" | "output";
@@ -34,6 +35,7 @@ export function VisualizerPanel({
   compileResult,
   isCompiling,
   onJumpToLine,
+  onFixWithAi,
 }: VisualizerPanelProps) {
   const [activeTab, setActiveTab] = useState<VisualizerTab>("all");
 
@@ -204,6 +206,7 @@ export function VisualizerPanel({
               errors={compileResult.errors}
               stageFailed={compileResult.stage_failed}
               onJumpToLine={onJumpToLine}
+              onFixWithAi={onFixWithAi}
             />
 
             {/* Stage Tab Views */}

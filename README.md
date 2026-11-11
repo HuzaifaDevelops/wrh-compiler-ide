@@ -2,6 +2,8 @@
 
 A modern, production-grade monorepo web application featuring an interactive web-based IDE, multi-stage compiler execution engine, and inspection dashboard for the **WRH** programming language (developed for the Compiler Construction course).
 
+> 📖 **Setting up on a new PC or sharing with teammates? Check the [Teammate Setup Guide](SETUP_GUIDE.md)!**
+
 ---
 
 ## 🏛 Architecture Overview
@@ -44,6 +46,7 @@ A modern, production-grade monorepo web application featuring an interactive web
 wrh_compiler_app/
 ├── package.json                      # Monorepo scripts and dev dependencies
 ├── README.md                         # Quickstart & architectural documentation
+├── SETUP_GUIDE.md                    # 1-click & step-by-step teammate setup guide
 ├── .gitignore                        # Monorepo gitignore rules
 ├── scripts/
 │   ├── dev.ps1                       # Windows PowerShell dev server launcher

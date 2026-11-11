@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     'apps.authentication',
     'apps.compiler',
     'apps.workspace',
+    'apps.ai_assistant',
 ]
 
 MIDDLEWARE = [
@@ -185,6 +186,8 @@ SIMPLE_JWT = {
 }
 
 # CORS Configuration
+from corsheaders.defaults import default_headers
+
 CORS_ALLOWED_ORIGINS = [
     origin.strip()
     for origin in os.getenv(
@@ -199,18 +202,16 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^http://127\.0\.0\.1:\d+$",
 ]
 
+if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True
+
 CORS_ALLOW_CREDENTIALS = True
 
-CORS_ALLOW_HEADERS = [
-    'accept',
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    'x-gemini-api-key',
     'accept-encoding',
-    'authorization',
-    'content-type',
     'dnt',
     'origin',
-    'user-agent',
-    'x-csrftoken',
-    'x-requested-with',
 ]
 
 # Internationalization
