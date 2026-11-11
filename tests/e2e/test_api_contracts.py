@@ -53,6 +53,22 @@ class TestApiContracts(unittest.TestCase):
         self.assertIsInstance(res["execution_time_ms"], (int, float))
         self.assertGreaterEqual(res["execution_time_ms"], 0)
 
+    def test_api_compile_icg_schema(self):
+        """Validates that successful compilation generates valid TAC, Quadruples, and Triples."""
+        code = "digit a := 10 +++ 5;\nflex(a);"
+        res = compile_wrh(code)
+
+        self.assertTrue(res["success"])
+        self.assertIn("icg", res)
+        icg = res["icg"]
+        self.assertIn("tac", icg)
+        self.assertIn("tac_lines", icg)
+        self.assertIn("quadruples", icg)
+        self.assertIn("triples", icg)
+        self.assertGreater(len(icg["tac_lines"]), 0)
+        self.assertGreater(len(icg["quadruples"]), 0)
+        self.assertGreater(len(icg["triples"]), 0)
+
     def test_api_compile_lexical_error_schema(self):
         """Validates that lexical errors return status='error' and stage_failed='lexical'."""
         code = "digit a := @42;"

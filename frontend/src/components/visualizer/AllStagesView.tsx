@@ -8,22 +8,26 @@ import {
   Code2,
   Layers,
   Table,
+  Terminal,
   ArrowRight,
   Sparkles,
   ChevronRight,
+  Binary,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { CompileResponse } from "@/types/compiler";
 
 interface AllStagesViewProps {
   result: CompileResponse;
-  onNavigateTab: (tab: "tokens" | "ast" | "symbols") => void;
+  onNavigateTab: (tab: "tokens" | "ast" | "symbols" | "icg" | "output") => void;
 }
 
 export function AllStagesView({ result, onNavigateTab }: AllStagesViewProps) {
   const isLexerSuccess = result.stage_reached >= 1 && result.stage_failed !== "lexical";
   const isParserSuccess = result.stage_reached >= 2 && result.stage_failed !== "syntax";
   const isSemanticSuccess = result.stage_reached >= 3 && result.stage_failed !== "semantic";
+  const isIcgSuccess = isSemanticSuccess && (result.icg?.tac_lines?.length || 0) > 0;
+  const isExecutionSuccess = isSemanticSuccess && !result.runtime_error;
 
   return (
     <div className="space-y-6">
@@ -43,7 +47,7 @@ export function AllStagesView({ result, onNavigateTab }: AllStagesViewProps) {
         </div>
 
         {/* Pipeline Stepper Nodes */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
           {/* Stage 1: Lexer */}
           <div
             className={`relative flex items-center gap-3 rounded-xl border p-3 transition-colors ${
@@ -161,11 +165,81 @@ export function AllStagesView({ result, onNavigateTab }: AllStagesViewProps) {
               </p>
             </div>
           </div>
+
+          {/* Stage 4: Intermediate Code Generation (ICG) */}
+          <div
+            className={`relative flex items-center gap-3 rounded-xl border p-3 transition-colors ${
+              isIcgSuccess
+                ? "border-emerald-800/80 bg-emerald-950/20"
+                : "border-slate-800 bg-slate-950/40 opacity-70"
+            }`}
+          >
+            <div
+              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+                isIcgSuccess
+                  ? "bg-indigo-900/60 text-indigo-400 border border-indigo-700/50"
+                  : "bg-slate-800 text-slate-400"
+              }`}
+            >
+              <Binary className="h-5 w-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-white">4. ICG</span>
+                {isIcgSuccess ? (
+                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                ) : (
+                  <span className="text-[10px] text-slate-500">Skipped</span>
+                )}
+              </div>
+              <p className="text-[11px] text-slate-400 truncate">
+                {result.icg?.tac_lines?.length ?? 0} TAC instructions
+              </p>
+            </div>
+          </div>
+
+          {/* Stage 5: Execution / Output */}
+          <div
+            className={`relative flex items-center gap-3 rounded-xl border p-3 transition-colors ${
+              isExecutionSuccess
+                ? "border-emerald-800/80 bg-emerald-950/20"
+                : result.runtime_error
+                ? "border-red-800/80 bg-red-950/30"
+                : "border-slate-800 bg-slate-950/40 opacity-70"
+            }`}
+          >
+            <div
+              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+                isExecutionSuccess
+                  ? "bg-emerald-900/60 text-emerald-400 border border-emerald-700/50"
+                  : result.runtime_error
+                  ? "bg-red-900/60 text-red-400 border border-red-700/50"
+                  : "bg-slate-800 text-slate-400"
+              }`}
+            >
+              <Terminal className="h-5 w-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-white">5. Output</span>
+                {isExecutionSuccess ? (
+                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                ) : result.runtime_error ? (
+                  <XCircle className="h-4 w-4 text-red-400" />
+                ) : (
+                  <span className="text-[10px] text-slate-500">Skipped</span>
+                )}
+              </div>
+              <p className="text-[11px] text-slate-400 truncate">
+                {result.output_lines?.length ?? 0} lines printed
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Tri-Pane Overview Cards */}
-      <div className="grid gap-4 lg:grid-cols-3">
+      {/* Pipeline Overview Cards */}
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         {/* Stage 1 Card: Lexer Tokens Preview */}
         <div className="flex flex-col rounded-xl border border-slate-800 bg-slate-900/60 overflow-hidden">
           <div className="flex items-center justify-between border-b border-slate-800 bg-slate-950/60 px-3.5 py-2.5">
@@ -284,6 +358,92 @@ export function AllStagesView({ result, onNavigateTab }: AllStagesViewProps) {
             className="flex items-center justify-center gap-1 border-t border-slate-800 bg-slate-950/40 py-2 text-xs font-medium text-indigo-400 hover:bg-slate-900 hover:text-indigo-300 transition-colors"
           >
             <span>View Full Symbol Table</span>
+            <ChevronRight className="h-3.5 w-3.5" />
+          </button>
+        </div>
+
+        {/* Stage 4 Card: Intermediate Code Generation (ICG) */}
+        <div className="flex flex-col rounded-xl border border-slate-800 bg-slate-900/60 overflow-hidden">
+          <div className="flex items-center justify-between border-b border-slate-800 bg-slate-950/60 px-3.5 py-2.5">
+            <div className="flex items-center gap-2">
+              <Binary className="h-4 w-4 text-indigo-400" />
+              <span className="text-xs font-bold text-slate-200">Stage 4: ICG</span>
+            </div>
+            <Badge variant="secondary" className="text-[10px] font-mono">
+              {result.icg?.tac_lines?.length ?? 0}
+            </Badge>
+          </div>
+          <div className="flex-1 p-3 overflow-y-auto max-h-64 font-mono text-[11px] bg-slate-950">
+            {result.icg?.tac_lines && result.icg.tac_lines.length > 0 ? (
+              <div className="space-y-1">
+                {result.icg.tac_lines.slice(0, 8).map((line, i) => (
+                  <div key={i} className="truncate text-slate-300 hover:text-white">
+                    <span className="text-slate-600 mr-2 select-none">{i + 1}</span>
+                    <span className={line.endsWith(":") ? "text-amber-400 font-bold" : ""}>
+                      {line}
+                    </span>
+                  </div>
+                ))}
+                {result.icg.tac_lines.length > 8 && (
+                  <p className="mt-2 text-center text-[10px] text-slate-500">
+                    + {result.icg.tac_lines.length - 8} more instructions
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="flex h-32 items-center justify-center text-xs text-slate-500 text-center">
+                No ICG generated yet.
+              </div>
+            )}
+          </div>
+          <button
+            onClick={() => onNavigateTab("icg")}
+            className="flex items-center justify-center gap-1 border-t border-slate-800 bg-slate-950/40 py-2 text-xs font-medium text-indigo-400 hover:bg-slate-900 hover:text-indigo-300 transition-colors"
+          >
+            <span>View TAC &amp; Quads</span>
+            <ChevronRight className="h-3.5 w-3.5" />
+          </button>
+        </div>
+
+        {/* Stage 5 Card: Program Output Preview */}
+        <div className="flex flex-col rounded-xl border border-slate-800 bg-slate-900/60 overflow-hidden">
+          <div className="flex items-center justify-between border-b border-slate-800 bg-slate-950/60 px-3.5 py-2.5">
+            <div className="flex items-center gap-2">
+              <Terminal className="h-4 w-4 text-emerald-400" />
+              <span className="text-xs font-bold text-slate-200">Stage 5: Output</span>
+            </div>
+            <Badge
+              variant={result.runtime_error ? "danger" : result.output_lines?.length ? "success" : "secondary"}
+              className="text-[10px] font-mono"
+            >
+              {result.output_lines?.length ? `${result.output_lines.length} lines` : "Idle"}
+            </Badge>
+          </div>
+          <div className="flex-1 p-3 overflow-y-auto max-h-64 font-mono text-[11px] bg-slate-950">
+            {result.runtime_error ? (
+              <p className="text-red-400 font-semibold">{result.runtime_error}</p>
+            ) : result.output_lines && result.output_lines.length > 0 ? (
+              <div className="space-y-1">
+                {result.output_lines.map((line, i) => (
+                  <div key={i} className="flex items-start gap-1.5">
+                    <span className="text-emerald-500 font-bold select-none">&gt;</span>
+                    <span className="text-emerald-300">{line}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex h-32 items-center justify-center text-xs text-slate-500 text-center">
+                No printed output.
+                <br />
+                Use flex(...) to print.
+              </div>
+            )}
+          </div>
+          <button
+            onClick={() => onNavigateTab("output")}
+            className="flex items-center justify-center gap-1 border-t border-slate-800 bg-slate-950/40 py-2 text-xs font-medium text-emerald-400 hover:bg-slate-900 hover:text-emerald-300 transition-colors"
+          >
+            <span>Open Output Console</span>
             <ChevronRight className="h-3.5 w-3.5" />
           </button>
         </div>

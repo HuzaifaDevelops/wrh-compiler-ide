@@ -12,6 +12,15 @@ from .lexer import tokenize
 from .parser import parse
 from .ast_nodes import render_ast_ascii, ProgramNode
 from .semantic import analyze
+from .interpreter import interpret
+from .icg import generate_icg
+
+EMPTY_ICG: Dict[str, Any] = {
+    "tac": "",
+    "tac_lines": [],
+    "quadruples": [],
+    "triples": [],
+}
 
 
 def compile_source(source_code: str) -> Dict[str, Any]:
@@ -50,6 +59,10 @@ def compile_source(source_code: str) -> Dict[str, Any]:
             "ast_ascii": "",
             "symbol_table": {},
             "errors": [e.to_dict()],
+            "icg": EMPTY_ICG,
+            "output": "",
+            "output_lines": [],
+            "runtime_error": None,
             "execution_time_ms": round(elapsed, 2),
         }
     except SyntaxError as e:
@@ -74,6 +87,10 @@ def compile_source(source_code: str) -> Dict[str, Any]:
                     "rule": "lexical_error",
                 }
             ],
+            "icg": EMPTY_ICG,
+            "output": "",
+            "output_lines": [],
+            "runtime_error": None,
             "execution_time_ms": round(elapsed, 2),
         }
 
@@ -100,6 +117,10 @@ def compile_source(source_code: str) -> Dict[str, Any]:
             "ast_ascii": "",
             "symbol_table": {},
             "errors": [e.to_dict()],
+            "icg": EMPTY_ICG,
+            "output": "",
+            "output_lines": [],
+            "runtime_error": None,
             "execution_time_ms": round(elapsed, 2),
         }
     except SyntaxError as e:
@@ -124,6 +145,10 @@ def compile_source(source_code: str) -> Dict[str, Any]:
                     "rule": "syntax_error",
                 }
             ],
+            "icg": EMPTY_ICG,
+            "output": "",
+            "output_lines": [],
+            "runtime_error": None,
             "execution_time_ms": round(elapsed, 2),
         }
 
@@ -142,6 +167,10 @@ def compile_source(source_code: str) -> Dict[str, Any]:
                 "ast_ascii": ast_ascii,
                 "symbol_table": sa.symbols.to_dict(),
                 "errors": sa.diagnostics,
+                "icg": EMPTY_ICG,
+                "output": "",
+                "output_lines": [],
+                "runtime_error": None,
                 "execution_time_ms": round(elapsed, 2),
             }
     except Exception as e:
@@ -164,8 +193,21 @@ def compile_source(source_code: str) -> Dict[str, Any]:
                     "rule": "unhandled_semantic_exception",
                 }
             ],
+            "icg": EMPTY_ICG,
+            "output": "",
+            "output_lines": [],
+            "runtime_error": None,
             "execution_time_ms": round(elapsed, 2),
         }
+
+    # Stage 4: Intermediate Code Generation (ICG)
+    try:
+        icg_result = generate_icg(ast)
+    except Exception:
+        icg_result = EMPTY_ICG
+
+    # Stage 5: Program Execution / Interpretation
+    output_lines, runtime_error = interpret(ast)
 
     elapsed = (time.perf_counter() - start_time) * 1000.0
     return {
@@ -178,5 +220,9 @@ def compile_source(source_code: str) -> Dict[str, Any]:
         "ast_ascii": ast_ascii,
         "symbol_table": sa.symbols.to_dict(),
         "errors": [],
+        "icg": icg_result,
+        "output": "\n".join(output_lines),
+        "output_lines": output_lines,
+        "runtime_error": runtime_error,
         "execution_time_ms": round(elapsed, 2),
     }

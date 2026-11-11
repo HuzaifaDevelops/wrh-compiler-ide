@@ -22,6 +22,28 @@ export interface CompileRequest {
   source_code: string;
 }
 
+export interface Quadruple {
+  index: number;
+  op: string;
+  arg1: string;
+  arg2: string;
+  result: string;
+}
+
+export interface Triple {
+  index: number;
+  op: string;
+  arg1: string;
+  arg2: string;
+}
+
+export interface ICGResult {
+  tac: string;
+  tac_lines: string[];
+  quadruples: Quadruple[];
+  triples: Triple[];
+}
+
 export interface CompileResponse {
   success: boolean;
   status: "compiled" | "error";
@@ -33,4 +55,8 @@ export interface CompileResponse {
   symbol_table: Record<string, SymbolTableEntry>;
   errors: CompilerError[];
   execution_time_ms: number;
+  icg?: ICGResult;
+  output?: string;
+  output_lines?: string[];
+  runtime_error?: string | null;
 }

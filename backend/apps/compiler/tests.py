@@ -41,6 +41,7 @@ from apps.compiler.engine import (
     StrNode,
     BoolNode,
     IdNode,
+    generate_icg,
 )
 
 User = get_user_model()
@@ -403,3 +404,69 @@ class SemanticAnalyzerEngineTests(TestCase):
         self.assertIn("variable 'unknown_var' is not declared", sa.errors[0])
         # Did not cascade into 'operator +++ needs digit operands'
         self.assertFalse(any("needs digit operands" in err for err in sa.errors))
+
+
+class ICGTests(TestCase):
+    """
+    Unit tests for Intermediate Code Generation (ICG):
+    Verifies Three-Address Code (TAC), Quadruples Table, and Triples Table.
+    """
+
+    def test_arithmetic_icg(self):
+        code = "digit a := 10 +++ 20 ** 3;"
+        ast = parse(tokenize(code))
+        res = generate_icg(ast)
+
+        self.assertIn("tac", res)
+        self.assertIn("quadruples", res)
+        self.assertIn("triples", res)
+
+        # TAC should contain temporaries and operators
+        tac = res["tac"]
+        self.assertIn("t1 := 20 ** 3", tac)
+        self.assertIn("t2 := 10 +++ t1", tac)
+        self.assertIn("a := t2", tac)
+
+        # Quadruples should have operator rows and result
+        quads = res["quadruples"]
+        self.assertEqual(len(quads), 3)
+        self.assertEqual(quads[0]["op"], "**")
+        self.assertEqual(quads[0]["result"], "t1")
+        self.assertEqual(quads[1]["op"], "+++")
+        self.assertEqual(quads[1]["result"], "t2")
+        self.assertEqual(quads[2]["op"], ":=")
+        self.assertEqual(quads[2]["result"], "a")
+
+        # Triples should reference previous indexes (0)
+        triples = res["triples"]
+        self.assertEqual(len(triples), 3)
+        self.assertEqual(triples[0]["op"], "**")
+        self.assertEqual(triples[1]["op"], "+++")
+        self.assertEqual(triples[1]["arg2"], "(0)")
+        self.assertEqual(triples[2]["arg2"], "(1)")
+
+    def test_control_flow_icg(self):
+        code = """
+        verify flag := yes;
+        when (flag ?= yes) {
+            flex("true");
+        } otherwise {
+            flex("false");
+        }
+        """
+        ast = parse(tokenize(code))
+        res = generate_icg(ast)
+
+        tac = res["tac"]
+        self.assertIn("ifFalse", tac)
+        self.assertIn("goto", tac)
+        self.assertIn("call flex, 1", tac)
+
+    def test_pipeline_includes_icg(self):
+        code = "digit x := 5;\nflex(x);"
+        res = compile_source(code)
+        self.assertTrue(res["success"])
+        self.assertIn("icg", res)
+        self.assertTrue(len(res["icg"]["tac_lines"]) > 0)
+        self.assertTrue(len(res["icg"]["quadruples"]) > 0)
+        self.assertTrue(len(res["icg"]["triples"]) > 0)

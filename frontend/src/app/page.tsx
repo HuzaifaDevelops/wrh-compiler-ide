@@ -13,6 +13,10 @@ import {
   User as UserIcon,
   Sparkles,
   Save,
+  Download,
+  Copy,
+  Check,
+  FolderCode,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +28,7 @@ import { wrhLanguageConfig, wrhMonarchTokensProvider } from "@/lib/wrh-monarch";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { DocsDrawer } from "@/components/docs/DocsDrawer";
 import { VisualizerPanel } from "@/components/visualizer/VisualizerPanel";
+import { SnippetsModal } from "@/components/workspace/SnippetsModal";
 
 // Dynamically import Monaco Editor to avoid SSR hydration issues
 const Editor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
@@ -85,7 +90,9 @@ export default function WorkspacePage() {
   // Modals & Drawers
   const [isDocsOpen, setIsDocsOpen] = useState<boolean>(false);
   const [isAuthOpen, setIsAuthOpen] = useState<boolean>(false);
+  const [isSnippetsOpen, setIsSnippetsOpen] = useState<boolean>(false);
   const [authInitialTab, setAuthInitialTab] = useState<"login" | "register">("login");
+  const [copiedCode, setCopiedCode] = useState<boolean>(false);
 
   // Monaco Editor References
   const editorRef = useRef<any>(null);
@@ -225,6 +232,33 @@ export default function WorkspacePage() {
     setIsDocsOpen(false);
   };
 
+  // Handle loading user saved snippet from Cloud Workspace
+  const handleLoadUserSnippet = (code: string, title: string) => {
+    setSourceCode(code);
+    clearEditorMarkers();
+    setCompileResult(null);
+  };
+
+  // Download editor code as .wrh file
+  const handleDownloadCode = () => {
+    const code = editorRef.current ? editorRef.current.getValue() : sourceCode;
+    const blob = new Blob([code], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "program.wrh";
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Copy editor code to clipboard
+  const handleCopyCode = () => {
+    const code = editorRef.current ? editorRef.current.getValue() : sourceCode;
+    navigator.clipboard.writeText(code);
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
+  };
+
   // Source code changes clear previous error markers
   const handleCodeChange = (val?: string) => {
     const newCode = val || "";
@@ -268,7 +302,18 @@ export default function WorkspacePage() {
             className="flex items-center gap-1.5 border-slate-700 bg-slate-800/80 text-xs text-slate-200 hover:bg-slate-700 hover:text-white"
           >
             <BookOpen className="h-3.5 w-3.5 text-indigo-400" />
-            <span>Language Guide</span>
+            <span className="hidden sm:inline">Language Guide</span>
+          </Button>
+
+          {/* Cloud Workspace Snippets Trigger */}
+          <Button
+            onClick={() => setIsSnippetsOpen(true)}
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-1.5 border-slate-700 bg-slate-800/80 text-xs text-slate-200 hover:bg-slate-700 hover:text-white"
+          >
+            <FolderCode className="h-3.5 w-3.5 text-indigo-400" />
+            <span className="hidden sm:inline">My Snippets</span>
           </Button>
 
           {/* Starter Snippets Selector */}
@@ -395,9 +440,39 @@ export default function WorkspacePage() {
               <span>editor.wrh</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-[11px] text-slate-500">
+              <span className="hidden lg:inline text-[11px] text-slate-500">
                 Press <kbd className="rounded bg-slate-800 px-1 py-0.5 text-[10px]">Ctrl+Enter</kbd> to compile
               </span>
+
+              {/* Copy Code Button */}
+              <button
+                onClick={handleCopyCode}
+                title="Copy editor code"
+                className="flex items-center gap-1 rounded px-2 py-0.5 text-[11px] text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              >
+                {copiedCode ? (
+                  <>
+                    <Check className="h-3 w-3 text-emerald-400" />
+                    <span className="text-emerald-400">Copied</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-3 w-3" />
+                    <span>Copy</span>
+                  </>
+                )}
+              </button>
+
+              {/* Export / Download .wrh File */}
+              <button
+                onClick={handleDownloadCode}
+                title="Download program.wrh"
+                className="flex items-center gap-1 rounded px-2 py-0.5 text-[11px] text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              >
+                <Download className="h-3 w-3" />
+                <span>Export</span>
+              </button>
+
               <Badge variant="secondary" className="font-mono text-[10px]">
                 WRH Syntax
               </Badge>
@@ -481,6 +556,18 @@ export default function WorkspacePage() {
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
         initialTab={authInitialTab}
+      />
+
+      {/* Cloud Workspace Snippets Modal */}
+      <SnippetsModal
+        isOpen={isSnippetsOpen}
+        onClose={() => setIsSnippetsOpen(false)}
+        currentCode={sourceCode}
+        onLoadSnippet={handleLoadUserSnippet}
+        onOpenAuth={() => {
+          setAuthInitialTab("login");
+          setIsAuthOpen(true);
+        }}
       />
     </div>
   );

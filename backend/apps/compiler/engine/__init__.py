@@ -30,6 +30,7 @@ from .ast_nodes import (
     IdNode,
     render_ast_ascii,
 )
+from .icg import ICGGenerator, generate_icg
 from .pipeline import compile_source
 
 __all__ = [
@@ -61,4 +62,6 @@ __all__ = [
     "BoolNode",
     "IdNode",
     "render_ast_ascii",
+    "ICGGenerator",
+    "generate_icg",
 ]

@@ -10,6 +10,7 @@ import {
   AlertTriangle,
   FileQuestion,
   Terminal,
+  Binary,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { CompileResponse } from "@/types/compiler";
@@ -18,6 +19,8 @@ import { AllStagesView } from "./AllStagesView";
 import { TokenStreamView } from "./TokenStreamView";
 import { AstTreeView } from "./AstTreeView";
 import { SymbolTableView } from "./SymbolTableView";
+import { IcgView } from "./IcgView";
+import { OutputConsoleView } from "./OutputConsoleView";
 
 interface VisualizerPanelProps {
   compileResult: CompileResponse | null;
@@ -25,7 +28,7 @@ interface VisualizerPanelProps {
   onJumpToLine?: (line: number, column?: number) => void;
 }
 
-export type VisualizerTab = "all" | "tokens" | "ast" | "symbols";
+export type VisualizerTab = "all" | "tokens" | "ast" | "symbols" | "icg" | "output";
 
 export function VisualizerPanel({
   compileResult,
@@ -110,6 +113,40 @@ export function VisualizerPanel({
                 </span>
               )}
             </button>
+
+            <button
+              onClick={() => setActiveTab("icg")}
+              className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold transition-all ${
+                activeTab === "icg"
+                  ? "bg-indigo-600 text-white shadow-sm"
+                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+              }`}
+            >
+              <Binary className="h-3.5 w-3.5" />
+              <span>4. ICG</span>
+              {compileResult?.icg?.tac_lines && compileResult.icg.tac_lines.length > 0 && (
+                <span className="rounded-full bg-slate-800 px-1.5 py-0.2 text-[10px] text-slate-400">
+                  {compileResult.icg.tac_lines.length}
+                </span>
+              )}
+            </button>
+
+            <button
+              onClick={() => setActiveTab("output")}
+              className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold transition-all ${
+                activeTab === "output"
+                  ? "bg-emerald-600 text-white shadow-sm"
+                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+              }`}
+            >
+              <Terminal className="h-3.5 w-3.5 text-emerald-400" />
+              <span>5. Output</span>
+              {compileResult?.output_lines && compileResult.output_lines.length > 0 && (
+                <span className="rounded-full bg-emerald-950 border border-emerald-700/60 text-emerald-300 px-1.5 py-0.2 text-[10px] font-bold">
+                  {compileResult.output_lines.length}
+                </span>
+              )}
+            </button>
           </div>
         </div>
 
@@ -191,6 +228,19 @@ export function VisualizerPanel({
             {activeTab === "symbols" && (
               <SymbolTableView
                 symbolTable={compileResult.symbol_table || {}}
+              />
+            )}
+
+            {activeTab === "icg" && (
+              <IcgView icg={compileResult.icg} />
+            )}
+
+            {activeTab === "output" && (
+              <OutputConsoleView
+                output={compileResult.output || ""}
+                outputLines={compileResult.output_lines || []}
+                runtimeError={compileResult.runtime_error}
+                executionTimeMs={compileResult.execution_time_ms}
               />
             )}
           </div>
